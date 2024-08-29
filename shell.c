@@ -1,45 +1,61 @@
-#include "main.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
 
-void display_prompt(void)
-{
-	write(STDOUT_FILENO, "#cisfun$ ", 9);
-}
-
-char *read_input(void)
-{
-	char *buffer = NULL;
-	size_t bufsize = 0;
-	ssize_t nread;
-
-	nread = getline(&buffer, &bufsize, stdin);
-
-	if (nread == -1)
-	{
-		if (feof(stdin)) /* Handle Ctrl+D */
-		{
-			free(buffer);
-			exit(EXIT_SUCCESS);
-		}
-		else
-		{
-			perror("getline");
-			return NULL;
-        }
-	}
-
-	buffer[strcspn(buffer, "\n")] = '\0'; /* Remove newline character */
-	return buffer;
-}
+#define PROMPT "#cisfun$ "
 
 void execute_command(char *cmd)
 {
-	char *argv[2];
-	argv[0] = cmd;
-	argv[1] = NULL;
-
-	if (execve(cmd, argv, NULL) == -1)
+	pid_t pid = fork();
+	if (pid == -1)
 	{
-		perror(cmd);
+	perror("fork");
+	exit(EXIT_FAILURE);
 	}
-	exit(EXIT_FAILURE); /* Terminate child process if execve fails */
+	{
+	else if (pid == 0)
+	char *argv[] = {cmd, NULL};
+	execve(cmd, argv, NULL);
+	perror("./shell");
+	exit(EXIT_FAILURE);
+	}
+	else
+	{
+	wait(NULL);
+	}
+}
+
+int main(void)
+{
+	char *line = NULL;
+	size_t len = 0;
+
+	while (1)
+	{
+	printf(PROMPT);
+	if (getline(&line, &len, stdin) == -1)
+	{
+	if (feof(stdin))
+	{
+	free(line);
+	exit(EXIT_SUCCESS);
+	}
+	else
+	{
+	perror("getline");
+	exit(EXIT_FAILURE);
+	}
+	}
+
+	line[strcspn(line, "\n")] = 0; // Remove newline character
+	if (strlen(line) > 0)
+	{
+	execute_command(line);
+	}
+	}
+
+	free(line);
+	return 0;
 }
