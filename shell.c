@@ -33,7 +33,9 @@ char *read_input(void)
 
 void execute_command(char *cmd)
 {
-	char *argv[] = {cmd, NULL};
+	char *argv[2];
+	argv[0] = cmd;
+	argv[1] = NULL;
 
 	if (execve(cmd, argv, NULL) == -1)
 	{
